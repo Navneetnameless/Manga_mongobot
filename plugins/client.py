@@ -33,7 +33,7 @@ async def check_links(link: str):
                 elif not container:
                     useless.append(url)
                     i+=1
-                     
+
     links = list(reversed(urls))
     texts = list(reversed(names))
     print(f" {len(urls)} : {len(texts)}")     
@@ -78,7 +78,7 @@ def clean(name, length=-1):
 
 
 class MangaClient(ClientSession, metaclass=LanguageSingleton):
-    
+
     def __init__(self, *args, name="client", **kwargs):
         if name == "client":
             raise NotImplementedError("A unique name must be provided for the client instance.")
@@ -101,7 +101,7 @@ class MangaClient(ClientSession, metaclass=LanguageSingleton):
             # Check if response is successful (2xx)
             if str(response.status).startswith('2'):
                 content = await response.read()
-                
+
                 # Cache the content if caching is enabled
                 if cache and cache_path:
                     cache_path.parent.mkdir(parents=True, exist_ok=True)
@@ -110,7 +110,7 @@ class MangaClient(ClientSession, metaclass=LanguageSingleton):
             else:
                 # Raise an error if the response is not successful
                 raise RuntimeError(f"Request failed with status code: {response.status}")
-            
+
             if rjson: return await response.json()
             elif req_content: return content
             else: return response
@@ -125,13 +125,16 @@ class MangaClient(ClientSession, metaclass=LanguageSingleton):
             raise ValueError("Unsupported HTTP method")
 
     async def set_pictures(self, manga_chapter: MangaChapter):
-        requests_url = manga_chapter.url
+        requests_url = manga_chapter.url 
 
-        response = await self.get(requests_url)
+        if requests_url.startswith("https://comick.io"):
+            manga_chapter.pictures = await self.pictures_from_chapters(requests_url)
+        else:
+            response = await self.get(requests_url)
 
-        content = await response.read()
+            content = await response.read()
 
-        manga_chapter.pictures = await self.pictures_from_chapters(content, response)
+            manga_chapter.pictures = await self.pictures_from_chapters(content, response)
 
         return manga_chapter
 
